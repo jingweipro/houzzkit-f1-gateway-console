@@ -184,14 +184,27 @@ def inspect_image_archive(filename):
                         basename in DENIED_BASENAMES or basename.startswith("backup-")
                         or basename.endswith(DENIED_SUFFIXES)
                     )
+                    # Only standard certifi public CA bundles may bypass the .pem filename rule.
+                    # A bundle containing a private key is NOT exempt.
+                    trusted_ca_path = (
+                        name.startswith(("usr/local/lib/python", "usr/lib/python"))
+                        and ("/site-packages/pip/_vendor/certifi/cacert.pem" in name
+                             or "/site-packages/certifi/cacert.pem" in name)
+                    )
                     app_file = name.startswith(("opt/console/", "opt/f1-console/", "app/", "srv/", "workspace/", "data/", "home/"))
-                    if not (sensitive_filename or app_file):
+                    if not (sensitive_filename or app_file or trusted_ca_path):
                         continue
                     if inner_item.size > MAX_TEXT_BYTES:
                         yield "image:" + name, "oversized-unscanned", 0
                         continue
                     data = inner.extractfile(inner_item).read()
-                    for label, line in inspect_bytes("image:" + name, data):
+                    safe_public_ca = (
+                        trusted_ca_path
+                        and b"-----BEGIN CERTIFICATE-----" in data
+                        and b"PRIVATE KEY" not in data
+                    )
+                    scan_name = "image:public-ca-bundle.txt" if safe_public_ca else "image:" + name
+                    for label, line in inspect_bytes(scan_name, data):
                         yield "image:" + name, label, line
 
 
