@@ -33,7 +33,7 @@ class ListenerEvidence(unittest.TestCase):
             table.write(f"0: {hexip}:{port:04X} 0 0A 0 0 0 0 0 {inode}\n")
 
     def test_lan_listener_found_despite_default_config(self):
-        self.listen("192.168.77.23", 18111, 42)
+        self.listen("198.51.100.23", 18111, 42)
         self.listen("127.0.0.1", 17896, 42)
         self.listen("127.0.0.1", 18111, 99)
         owned_listeners = ingress.owned_listeners
@@ -42,11 +42,11 @@ class ListenerEvidence(unittest.TestCase):
                 "agent.ingress.owned_listeners", side_effect=lambda _, p: owned_listeners(self.proc, p)), patch(
                 "socket.create_connection", side_effect=self.lan_only) as connect:
             agent.require_running({"mixed-port":18111,"external-controller":"127.0.0.1:17896"})
-        self.assertEqual(connect.call_args.args[0], ("192.168.77.23", 18111))
+        self.assertEqual(connect.call_args.args[0], ("198.51.100.23", 18111))
 
     @staticmethod
     def lan_only(address, timeout):
-        if address != ("192.168.77.23", 18111):
+        if address != ("198.51.100.23", 18111):
             raise OSError
         return contextlib.nullcontext()
 
@@ -58,9 +58,9 @@ class ListenerEvidence(unittest.TestCase):
         self.assertEqual(ingress.owned_listeners(self.proc, 10002), [])
 
     def test_config_fallback_rejects_unowned_address_and_hostnames(self):
-        config = {"allow-lan":True, "bind-address":"192.168.77.23"}
+        config = {"allow-lan":True, "bind-address":"198.51.100.23"}
         with patch("socket.socket") as sock:
-            self.assertEqual(ingress.configured_hosts(config), ["192.168.77.23"])
+            self.assertEqual(ingress.configured_hosts(config), ["198.51.100.23"])
             sock.return_value.__enter__.return_value.bind.side_effect = OSError()
             self.assertEqual(ingress.configured_hosts(config), [])
         self.assertEqual(ingress.configured_hosts({**config,"bind-address":"unknown.example"}), [])
