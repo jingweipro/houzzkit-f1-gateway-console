@@ -72,7 +72,7 @@ class TestAgentSecurity(unittest.TestCase):
               ["DIRECT"]):
    with self.assertRaises(ValueError):agent.reorder(arr)
  def test_private_url_rejected(self):
-  for u in ("http://example.com/sub","https://localhost/sub","https://192.168.31.1/sub",
+  for u in ("http://example.com/sub","https://localhost/sub","https://192.0.2.1/sub",
             "https://user:password@example.org/sub","file:///etc/passwd"):
    with self.assertRaises(ValueError):agent.validate_url(u)
  def test_safe_config_guardrails(self):
