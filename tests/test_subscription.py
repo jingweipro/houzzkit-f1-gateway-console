@@ -257,17 +257,17 @@ class Changes(unittest.TestCase):
 
     def test_rollback_lan_when_loopback_fails(self):
         def connect(address, timeout):
-            if address==("192.168.77.23", 18880):
+            if address==("198.51.100.23", 18880):
                 return contextlib.nullcontext()
             raise OSError
         self.connect.side_effect=connect
-        with patch("agent.ingress.configured_hosts",return_value=["127.0.0.1","192.168.77.23"]):
+        with patch("agent.ingress.configured_hosts",return_value=["127.0.0.1","198.51.100.23"]):
             marker=agent.BASE/"first"
             self.system.write_text(f'#!/bin/sh\nif test ! -f "{marker}"; then echo 1 > "{marker}"; exit 1; fi\necho active\n')
             with self.assertRaisesRegex(subscription.Notice,"已恢复"):
                 agent.reorder(self.order)
         self.assertEqual(agent.CONFIG.read_bytes(),self.before)
-        self.assertEqual([c.args[0][0] for c in self.connect.call_args_list],["127.0.0.1","192.168.77.23"])
+        self.assertEqual([c.args[0][0] for c in self.connect.call_args_list],["127.0.0.1","198.51.100.23"])
 
     def test_restart_after_interrupt_before_commit(self):
         with patch("agent.restart_checked", side_effect=SystemExit), self.assertRaises(SystemExit):
