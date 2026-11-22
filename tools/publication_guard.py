@@ -37,7 +37,7 @@ PLACEHOLDERS = (
 DENIED_BASENAMES = {
     ".env", "auth.json", "initial-password.txt", "subscriptions.json",
     "id_rsa", "id_ed25519", "credentials.json", "service-account.json",
-    "kubeconfig", "token.txt", ".npmrc", ".pypirc",
+    "kubeconfig", "token", "token.txt", ".npmrc", ".pypirc",
 }
 DENIED_SUFFIXES = (".p12", ".pfx", ".key", ".pem", ".hdp")
 IGNORED_PERSONAL_PATHS = (b"/Users/example/", b"/Users/runner/", b"/Users/demo/")
