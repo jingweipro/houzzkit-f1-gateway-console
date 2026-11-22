@@ -80,6 +80,17 @@ class PublicationSafety(unittest.TestCase):
         private = b"-----BEGIN " + b"OPENSSH PRIVATE KEY-----\nFAKEPRIVATE\n"
         self.assertTrue(scan_layer(private))
 
+    def test_hos_hdp_token_member_is_blocked(self):
+        import zipfile
+        with tempfile.TemporaryDirectory() as td:
+            package = Path(td) / "candidate.hdp"
+            with zipfile.ZipFile(package, "w") as out:
+                out.writestr("token", synthetic_credential())
+                out.writestr("config.yml", "name: Demo\n")
+            findings = list(guard.inspect_package_archive(package))
+            self.assertTrue(any(rule == "sensitive-filename" for _, rule, _ in findings))
+            self.assertNotIn(synthetic_credential(), str(findings))
+
     def test_image_layer_scans_app_and_redacts_result(self):
         key = synthetic_credential().encode()
         content = b'ACCESS_TOKEN="' + key + b'"\n'
