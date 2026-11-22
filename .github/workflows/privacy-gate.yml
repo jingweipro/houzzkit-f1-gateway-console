@@ -1,0 +1,29 @@
+name: Public release privacy gate
+on:
+  push:
+  pull_request:
+  release:
+    types: [published, prereleased]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-audit:
+    name: source-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Block credentials, private runtime files and personal paths
+        run: |
+          python tools/publication_guard.py --history --extra-dir hos-appstore
+          if test -d standalone/store; then
+            python tools/publication_guard.py --extra-dir standalone/store
+          fi
+      - name: Verify scanner catches synthetic secrets and deleted history
+        run: python -m unittest discover -s tests -p test_publication_guard.py -v
