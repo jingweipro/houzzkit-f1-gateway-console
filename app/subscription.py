@@ -115,7 +115,7 @@ def resolve(host):
         raise Notice("订阅域名解析超时") from None
 
 
-def fetch(url):
+def fetch(url, *, parse=None):
     try:
         host, target = endpoint(url)
         addresses = resolve(host)
@@ -143,6 +143,9 @@ def fetch(url):
                             raise Notice("订阅超过 2 MB")
                         if expected is not None and len(body) != expected:
                             raise Notice("订阅下载不完整")
+                        if parse is not None:
+                            node_count(body)
+                            return parse(body)
                         return {"host": host, "count": node_count(body),
                                 "usage": usage(response.getheader("Subscription-Userinfo"))}
     except Notice:

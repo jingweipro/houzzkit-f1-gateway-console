@@ -1,0 +1,10 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>F1 显式代理</title>
+<h1>F1 显式代理</h1><p>登录前请在 HOS 私有数据目录读取 pairing.txt，核对浏览器证书 SHA256 指纹。</p>
+<form id="login"><label>管理密码 <input type="password" required id="pw"></label><button>登录</button></form>
+<section hidden id="panel"><h2>订阅与代理</h2><p id="status"></p>
+<p>支持 Clash YAML 中使用公网 IP 的 HTTP / SOCKS5 节点。保存会替换待启用快照，当前连接不受影响。启用会中断现有连接，流量交给快照中的首个节点。</p>
+<form id="save"><label>HTTPS 订阅地址 <input type="password" required id="url"></label><button>验证并保存</button></form>
+<button id="enable">启用已保存快照</button><button id="disable">停用代理</button><button id="refresh">刷新状态</button>
+<p>仅在可信局域网使用。客户端手动设置 F1 地址、TCP 17890、用户名 client。回滚时停用并撤销客户端代理设置。</p>
+<details><summary>查看客户端密码</summary><code id="credential"></code></details><button id="logout">退出</button></section>
+<p role="status" id="message"></p><footer>全屋 UDP 透明代理与 DHCP 管理未开放。</footer><script src="/ui.js"></script></html>

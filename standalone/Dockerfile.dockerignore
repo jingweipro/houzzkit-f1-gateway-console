@@ -1,0 +1,9 @@
+**
+!app/
+!app/subscription.py
+!app/resolve_host.py
+!standalone/
+!standalone/index.html
+!standalone/ui.js
+!standalone/ui.py
+!standalone/runtime.py

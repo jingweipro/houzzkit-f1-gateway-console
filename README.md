@@ -46,3 +46,5 @@ We intend to submit a tested app definition after the ARM64 image, HOS native re
 Security: do not expose the HTTP administration interface to the internet, use it on shared Wi-Fi or report live subscription tokens in public issues. No personal credentials or production data are included.
 
 License: MIT. Not affiliated with or endorsed by HOUZZkit.
+
+独立 HOS 开发候选位于 [standalone/](standalone/)。它使用容器内的核心和私有数据卷。支持的订阅格式、构建步骤与实测边界见 [独立候选验收报告](STORE_MVP_REPORT.md)。
