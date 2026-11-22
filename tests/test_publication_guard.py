@@ -80,6 +80,20 @@ class PublicationSafety(unittest.TestCase):
         private = b"-----BEGIN " + b"OPENSSH PRIVATE KEY-----\nFAKEPRIVATE\n"
         self.assertTrue(scan_layer(private))
 
+    def test_failure_logs_hide_secret_bearing_filenames(self):
+        import contextlib
+        from unittest.mock import patch
+        private_name = "secrets/" + synthetic_credential() + ".txt"
+        output = io.StringIO()
+        with patch.object(sys, "argv", ["publication_guard.py"]), patch.object(
+                guard, "inspect_worktree", return_value=iter([(private_name, "provider-token", 1)])):
+            with contextlib.redirect_stdout(output):
+                result = guard.main()
+        self.assertEqual(result, 1)
+        self.assertIn("source_id=", output.getvalue())
+        self.assertNotIn(private_name, output.getvalue())
+        self.assertNotIn(synthetic_credential(), output.getvalue())
+
     def test_hos_hdp_token_member_is_blocked(self):
         import zipfile
         with tempfile.TemporaryDirectory() as td:
