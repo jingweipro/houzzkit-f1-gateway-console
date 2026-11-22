@@ -7,6 +7,7 @@ on:
       - "standalone/**"
       - "app/subscription.py"
       - "app/resolve_host.py"
+      - "tools/publication_guard.py"
       - ".github/workflows/arm64-candidate.yml"
   workflow_dispatch:
 jobs:
@@ -17,14 +18,23 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
+      - name: Scan source and HOS definition before building
+        run: python3 tools/publication_guard.py --history --extra-dir standalone/store
       - name: Build offline candidate for ARM64 (no push)
         run: docker buildx build --progress=plain --platform linux/arm64 --load -f standalone/Dockerfile -t f1-standalone:candidate .
       - name: Verify image architecture and privilege declaration
         run: |
           test "$(docker image inspect -f '{{.Architecture}}' f1-standalone:candidate)" = arm64
           test "$(docker image inspect -f '{{.Config.User}}' f1-standalone:candidate)" = 10001:10001
+      - name: Scan full candidate image layers and embedded config
+        run: |
+          docker image save -o "$RUNNER_TEMP/f1-candidate.tar" f1-standalone:candidate
+          python3 tools/publication_guard.py --image-tar "$RUNNER_TEMP/f1-candidate.tar"
+          rm -f "$RUNNER_TEMP/f1-candidate.tar"
       - name: Real Mihomo loopback HTTP and SOCKS5 smoke (no external networking)
         run: |
           docker run --rm --platform linux/arm64 --network none --cap-drop ALL \
