@@ -17,7 +17,7 @@ jobs:
       - name: Mandatory source, history and HOS package privacy scan
         run: python3 tools/publication_guard.py --history --extra-dir standalone/store
       - name: Build exact candidate for ARM64
-        run: docker buildx build --progress=plain --platform linux/arm64 --load -f standalone/Dockerfile -t f1-standalone:checked .
+        run: docker buildx build --progress=plain --platform linux/arm64 --load --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" -f standalone/Dockerfile -t f1-standalone:checked .
       - name: Verify image user and architecture
         run: |
           test "$(docker image inspect -f '{{.Architecture}}' f1-standalone:checked)" = arm64
@@ -37,11 +37,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push development-only image to GHCR after privacy checks and smoke
+      - name: Push the EXACT scanned image (no second build)
         run: |
-          docker buildx build --progress=plain --platform linux/arm64 --push --provenance=false --sbom=false \
-            --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
-            -f standalone/Dockerfile \
-            -t "ghcr.io/${{ github.repository }}:0.1.0-dev-arm64" \
-            -t "ghcr.io/${{ github.repository }}:sha-${GITHUB_SHA:0:12}" .
-          docker buildx imagetools inspect "ghcr.io/${{ github.repository }}:0.1.0-dev-arm64"
+          image="ghcr.io/${{ github.repository }}:0.1.0-dev-arm64"
+          sha_image="ghcr.io/${{ github.repository }}:sha-${GITHUB_SHA:0:12}"
+          checked_id="$(docker image inspect -f '{{.Id}}' f1-standalone:checked)"
+          docker tag f1-standalone:checked "$image"
+          docker tag f1-standalone:checked "$sha_image"
+          test "$(docker image inspect -f '{{.Id}}' "$image")" = "$checked_id"
+          test "$(docker image inspect -f '{{.Id}}' "$sha_image")" = "$checked_id"
+          docker push "$image"
+          docker push "$sha_image"
+          docker buildx imagetools inspect "$image"
