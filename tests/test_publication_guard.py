@@ -58,6 +58,28 @@ class PublicationSafety(unittest.TestCase):
             subprocess.run(["git", "commit", "-qm", "delete bad file"], cwd=root, check=True)
             self.assertTrue(any(rule == "provider-token" for _, rule, _ in guard.inspect_git_history(root)))
 
+    def test_public_ca_bundle_is_allowed_but_private_key_is_not(self):
+        path = "usr/local/lib/python3.13/site-packages/pip/_vendor/certifi/cacert.pem"
+
+        def scan_layer(payload):
+            inner_data = io.BytesIO()
+            with tarfile.open(fileobj=inner_data, mode="w") as inner:
+                item = tarfile.TarInfo(path)
+                item.size = len(payload)
+                inner.addfile(item, io.BytesIO(payload))
+            with tempfile.TemporaryDirectory() as td:
+                image_tar = Path(td) / "image.tar"
+                with tarfile.open(image_tar, mode="w") as outer:
+                    item = tarfile.TarInfo("blobs/sha256/" + "c" * 64)
+                    item.size = len(inner_data.getvalue())
+                    outer.addfile(item, io.BytesIO(inner_data.getvalue()))
+                return list(guard.inspect_image_archive(image_tar))
+
+        cert = b"-----BEGIN CERTIFICATE-----\nFAKEPUBLICCABUNDLE\n-----END CERTIFICATE-----\n"
+        self.assertFalse(scan_layer(cert))
+        private = b"-----BEGIN " + b"OPENSSH PRIVATE KEY-----\nFAKEPRIVATE\n"
+        self.assertTrue(scan_layer(private))
+
     def test_image_layer_scans_app_and_redacts_result(self):
         key = synthetic_credential().encode()
         content = b'ACCESS_TOKEN="' + key + b'"\n'
