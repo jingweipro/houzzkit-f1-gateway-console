@@ -2,6 +2,7 @@
 """Fail-closed publication checks. Findings contain locations, NEVER matched secrets."""
 import argparse
 import io
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -239,8 +240,10 @@ def main():
         failures += list(inspect_package_archive(options.package_zip))
     # A failed gate never prints matched data, source lines, URLs, or secret values.
     for path, category, line in failures[:100]:
-        display_path = path.replace("\n", "_").replace("\r", "_")[:180]
-        print("PUBLICATION_BLOCKED", display_path, "line", line, "rule", category)
+        # Even a malicious filename can contain a credential; never echo paths in public CI logs.
+        anonymous_id = hashlib.sha256(path.encode("utf-8", "replace")).hexdigest()[:12]
+        print("PUBLICATION_BLOCKED", "source_id=" + anonymous_id,
+              "line", line, "rule", category)
     if len(failures) > 100:
         print("ADDITIONAL_FINDINGS", len(failures) - 100)
     if failures:
